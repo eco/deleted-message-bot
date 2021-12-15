@@ -8,4 +8,4 @@ RUN pip3 install -r requirements.txt
 
 COPY . .
 
-CMD ["/usr/local/bin/python3.9", "bot.py"]
+CMD ["/usr/local/bin/python3", "bot.py"]
