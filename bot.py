@@ -1,6 +1,6 @@
 import discord
 from datetime import datetime
-import config
+import os
 
 intents = discord.Intents().default()
 
@@ -28,6 +28,6 @@ async def on_ready():
 async def on_message_delete(message):
     print(message) #Used for debugging, remove in future release.
     removeEmbed = await buildEmbed(message)
-    await message.guild.get_channel(config.LOG_CHANNEL).send(embed=removeEmbed)
+    await message.guild.get_channel(int(os.environ.get('LOG_CHANNEL'))).send(embed=removeEmbed)
     
-client.run(config.TOKEN)
+client.run(os.environ.get('TOKEN'))
