@@ -1,33 +1,67 @@
 import discord
 from datetime import datetime
 import os
+from dateutil.tz import *
 
 intents = discord.Intents().default()
 
 client = discord.Client(intents=intents)
 
-#TODO Repurpose to work with other future functions. Provide title as input.
-# Or dictionary with preset values for colour, title, etc based on what triggered call.
-# {"deleted": {"colour": 0xCC0000, "title": "Message Deleted"}, "edited": {"colour": orange?, "title": "Message Edited"}}
-async def buildEmbed(message):
-    embedMessage = discord.Embed(title="Message Deleted", description="", color=0xCC0000)
-    embedMessage.set_author(name=message.author.name)
-    embedMessage.set_thumbnail(url=message.author.avatar_url)
-    embedMessage.add_field(name="Channel", value=message.channel.mention, inline=True)
-    embedMessage.add_field(name="Message ID", value=message.id, inline=True)
-    embedMessage.add_field(name="Content:", value=f"`{message.content}`", inline=False)
-    #Probably should set timezone to PST. Not super useful since discord message time **should** be accurate.
-    embedMessage.set_footer(text=f"User ID: {message.author.id} | {datetime.now().strftime('%m/%d/%Y %H:%M:%S')}")
+embedData = {
+    "deleted": {"colour": 0xCC0000, "title": "Message Deleted"},
+    "edited": {"colour": 0xFFCC00, "title": "Message Edited"},
+}
+
+
+async def buildEmbed(messages, triggertype):
+    embedMessage = discord.Embed(
+        title=f"{embedData[triggertype]['title']}",
+        description="",
+        color=embedData[triggertype]["colour"],
+    )
+    embedMessage.set_author(name=messages[0].author.name)
+    embedMessage.set_thumbnail(url=messages[0].author.avatar_url)
+    embedMessage.add_field(
+        name="Channel", value=messages[0].channel.mention, inline=True
+    )
+    embedMessage.add_field(name="Message ID", value=messages[0].id, inline=True)
+    if triggertype == "edited":
+        embedMessage.add_field(
+            name="Before:", value=f"`{messages[0].content}`", inline=False
+        )
+        embedMessage.add_field(
+            name="After:", value=f"`{messages[1].content}`", inline=False
+        )
+    else:
+        embedMessage.add_field(
+            name="Content:", value=f"`{messages[0].content}`", inline=False
+        )
+    embedMessage.set_footer(
+        text=f"User ID: {messages[0].author.id} | {datetime.now().strftime('%m/%d/%Y %H:%M:%S')} {datetime.now(tzlocal()).tzname()}"
+    )
     return embedMessage
+
 
 @client.event
 async def on_ready():
-    print('Logged in.')
+    print("Logged in.")
+
 
 @client.event
 async def on_message_delete(message):
-    print(message) #Used for debugging, remove in future release.
-    removeEmbed = await buildEmbed(message)
-    await message.guild.get_channel(int(os.environ.get('LOG_CHANNEL'))).send(embed=removeEmbed)
-    
-client.run(os.environ.get('TOKEN'))
+    print()
+    removeEmbed = await buildEmbed([message], "deleted")
+    await message.guild.get_channel(int(os.environ.get("LOG_CHANNEL"))).send(
+        embed=removeEmbed
+    )
+
+
+@client.event
+async def on_message_edit(before, after):
+    editEmbed = await buildEmbed([before, after], "edited")
+    await before.guild.get_channel(int(os.environ.get("LOG_CHANNEL"))).send(
+        embed=editEmbed
+    )
+
+
+client.run(os.environ.get("TOKEN"))
