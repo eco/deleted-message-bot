@@ -58,10 +58,11 @@ async def on_message_delete(message):
 
 @client.event
 async def on_message_edit(before, after):
-    editEmbed = await buildEmbed([before, after], "edited")
-    await before.guild.get_channel(int(os.environ.get("LOG_CHANNEL"))).send(
-        embed=editEmbed
-    )
+    if before.author.id != int(os.environ.get("BOT_ID")):
+        editEmbed = await buildEmbed([before, after], "edited")
+        await before.guild.get_channel(int(os.environ.get("LOG_CHANNEL"))).send(
+            embed=editEmbed
+        )
 
 
 client.run(os.environ.get("TOKEN"))
