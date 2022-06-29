@@ -5,6 +5,8 @@ from dateutil.tz import *
 
 intents = discord.Intents().default()
 
+intents.messages = True
+
 client = discord.Client(intents=intents)
 
 embedData = {
